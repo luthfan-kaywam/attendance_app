@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'app/core/theme/app_theme.dart';
+import 'app/data/services/attendance_service.dart';
 import 'app/data/services/auth_service.dart';
 import 'app/data/services/storage_service.dart';
 import 'app/routes/app_pages.dart';
@@ -12,32 +13,31 @@ import 'app/routes/app_routes.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Set preferred screen orientations
+  // Set orientasi layar potret
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
 
-  // Initialize local date formatting (for Bahasa Indonesia)
+  // Inisialisasi format tanggal lokal Indonesia
   await initializeDateFormatting('id_ID', null);
 
-  // Initialize GetStorage
+  // Inisialisasi GetStorage satu kali tanpa error
   await GetStorage.init();
 
-  // Register permanent services before app runs
-  final storageService =
-      await Get.putAsync<StorageService>(() async => StorageService(), permanent: true);
+  // Daftarkan service utama sebelum aplikasi dijalankan
+  await Get.putAsync<StorageService>(() async => StorageService(), permanent: true);
+  await Get.putAsync<AttendanceService>(
+    () async => await AttendanceService().init(),
+    permanent: true,
+  );
   Get.put<AuthService>(AuthService(), permanent: true);
 
-  final isLoggedIn = storageService.read<bool>('is_logged_in') ?? false;
-
-  runApp(DigitalAttendanceApp(initialRoute: isLoggedIn ? AppRoutes.home : AppRoutes.login));
+  runApp(const DigitalAttendanceApp());
 }
 
 class DigitalAttendanceApp extends StatelessWidget {
-  final String initialRoute;
-
-  const DigitalAttendanceApp({super.key, required this.initialRoute});
+  const DigitalAttendanceApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +45,7 @@ class DigitalAttendanceApp extends StatelessWidget {
       title: 'Digital Attendance',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      initialRoute: initialRoute,
+      initialRoute: AppRoutes.splash,
       getPages: AppPages.pages,
       defaultTransition: Transition.fadeIn,
     );
